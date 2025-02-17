@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 120vh;
+      margin: 0;
+    }
+    #loadingSpinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 5px;
+      color: white;
+      text-align: center;
+      z-index: 1000;
+    }
+    .logo-spinner {
+      width: 100px;
+      height: auto;
+      animation: rotateLogo 4s linear infinite; /* 4 saniye boyunca döner */
+    }
+
+    @keyframes rotateLogo {
+      0% { transform: rotateY(0deg); }        /* Başlangıçta düz */
+      50% { transform: rotateY(180deg); }     /* Yarıda 180 derece döner */
+      100% { transform: rotateY(360deg); }    /* Tam tur döner */
+    }
+
+    #loadingSpinner p {
+      color: white;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .form-container {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #555;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
+    input[readonly], select[readonly], textarea[readonly] {
+      background-color: #e9ecef;
+      pointer-events: none;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-family: Arial, sans-serif;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+      color: #333;
+      font-weight: bold;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    .actionCell{
+      text-align: center; /* Yatay ortalama */
+      vertical-align: middle; /* Dikey ortalama */
+    }
+    #deleteButton {
+      background-color: #FF5722;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      text-align: center; /* Yatay ortalama */
+      vertical-align: middle; /* Dikey hizalama */
+      display: flex; /* Flexbox kullanımı */
+      justify-content: center; /* Yatayda ortalama */
+      align-items: center; /* Dikeyde ortalama */
+      cursor: pointer; /* Fare işaretçisi değişimi */
+      font-size: 14px; /* Yazı boyutu */
+      border-radius: 4px; /* Yuvarlak köşeler */
+    }
+
+    #deleteButton:hover {
+      background-color: #e64a19;
+    }
+    /* Tablo başlığını ortalar */
+    #notesTableContainer {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 30%;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    #addButton {
+      padding: 12px 20px;
+      background-color: #4CAF50;
+      color: white;
+    }
+    #addButton:hover {
+      background-color: #45a049;
+    }
+    #saveButton {
+      padding: 12px 20px;
+      background-color: #2196F3;
+      color: white;
+    }
+    #saveButton:hover {
+      background-color: #1e87d2;
+    }
+    #refreshButton {
+      padding: 12px 20px;
+      background-color: #FF5722;
+      color: white;
+    }
+    #refreshButton:hover {
+      background-color: #e64a19;
+    }
+    #suggestionsContainer {
+      max-height: 300px;
+      overflow-y: auto; /* Taşan öğeler için kaydırma çubuğu ekler */
+    }
+
+    .suggestion {
+      padding: 5px 10px; /* Padding'i küçülttük */
+      border: 1px solid #ccc;
+      margin: 3px 0; /* Margin'i küçülttük */
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between; /* Öğeleri yatayda hizalar */
+      align-items: center;
+    }
+
+    .suggestion span {
+      text-align: left;
+    }
+
+    .kitapAdi {
+      font-weight: bold;
+      padding-right: 8px;
+      flex: 4; /* Kitap adı daha fazla yer kaplar */
+    }
+
+    .kitapSayfa {
+      text-align: right;
+      padding-right: 8px;
+      flex: 1; /* Sayfa numarası daha az yer kaplar */
+    }
+
+    .kitapGrubu {
+      text-align: center;
+      padding-left: 8px;
+      flex: 2; /* Kitap grubu daha fazla yer kaplar, ancak kitap adı kadar değil */
+    }
+
+/* Modal Stil */
+    #myModal {
+      display: none; /* Başlangıçta gizli */
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4); /* Arka plan karartma */
+      overflow: auto;
+      padding-top: 60px;
+    }
+    /* Modal İçerik */
+.modal-content {
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 300px; /* Genişlik */
+  height: 300px; /* Yükseklik */
+  text-align: center;
+  box-sizing: border-box; /* Padding'in boyuta dahil edilmesini sağlar */
+  border-radius: 8px; /* Köşeleri yuvarlatmak için */
+  font-size: 20px; /* Yazı puntosunu büyütmek için */
+  
+  /* Flexbox ile içerik ortalama */
+  display: flex;
+  justify-content: center; /* Yatayda ortalama */
+  align-items: center; /* Dikeyde ortalama */
+  flex-direction: column; /* İçeriğin dikeyde düzenlenmesini sağlar */
+}
+    /* Kapatma Butonu */
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingSpinner" style="display:none;">
+    <p id="loadingText">Veriler yükleniyor...</p>
+    <img src="https://drive.google.com/thumbnail?id=BURADAidOlacak&sz=w1000" alt="Loading..." class="logo-spinner" style="width:171px; height:171px;">
+  </div>
+    <!-- Modal -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <img src="https://drive.google.com/thumbnail?id=BURADAidOlacak&sz=w1000" alt="Loading..." style="width:171px; height:171px;">
+      <p id="modalMessage"></p> <!-- Burada mesaj dinamik olarak gösterilecek -->
+      <span class="close">&times;</span>
+    </div>
+  </div>
+  <div class="form-container">
+    <div style="display: flex; justify-content: center; align-items: center;">
+      <img id="studentImage" src="https://drive.google.com/thumbnail?id=BURADAidOlacak&sz=w1000" alt="Öğrenci Resmi" style="width:171px; height:171px;">
+    </div>
+    <h2>Kitap İşlemleri</h2>
+    <div id="student-container">
+      <label>Öğrenci No:</label>
+      <input type="number"  id ="studentNo" class="studentNo" oninput="fillStudentData(this)" required>
+
+      <label>Şifre:</label>
+      <input type="password" id="sifre" placeholder="TC'nin ilk 6 basamağı">
+
+      <label>Ad Soyad:</label>
+      <input type="text" id="adSoyad" readonly>
+
+
+      <label>Kitap Adı:</label>
+      <input type="text" id="kitapAdi" oninput="showSuggestions(this)">
+
+      <!-- Öneriler için container -->
+      <div id="suggestionsContainer"></div>
+
+      <div id="kitapBilgileri">
+        <label>Kitap Grubu:</label>
+        <select id="kitapGrubu" onchange="updateKitapTuru()">
+          <option value="">Seçiniz</option>
+        </select>
+
+        <label>Kitap Türü:</label>
+        <select id="kitapTuru">
+          <option value="">Seçiniz</option>
+        </select>
+
+        <label>Kitap Sayfası:</label>
+        <input type="number" id="kitapSayfasi">
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between;">
+      <button type="button" id="addButton" onclick="getKitapData()">Okunan Kitaplar</button>
+      <button type="button" id="saveButton" onclick="submitKitapForm()">Kaydet</button>
+      <button type="button" id="refreshButton" onclick="refreshForm()">Formu Yenile</button>
+    </div>
+    <div id="notesTableContainer"></div>
+  </div>
+
+  <script>
+    var students = [];
+    var kitaplik = [];
+    var grupTur = [];
+    function showLoading(metin) {
+      document.getElementById("loadingText").textContent = metin;
+      document.getElementById("loadingSpinner").style.display = "block";
+    }
+
+    // Yükleme ekranını gizle
+    function hideLoading() {
+      document.getElementById("loadingSpinner").style.display = "none";
+    }
+    function showCustomAlert(message) {
+      document.getElementById("modalMessage").innerText = message;
+      document.getElementById("myModal").style.display = "block";
+    }
+
+    // Modal'ı kapatma işlemi
+    document.querySelector(".close").onclick = function() {
+      document.getElementById("myModal").style.display = "none";
+    }
+
+    // Eğer kullanıcı modal dışında bir yere tıklarsa da modal'ı kapat
+    window.onclick = function(event) {
+      if (event.target == document.getElementById("myModal")) {
+        document.getElementById("myModal").style.display = "none";
+      }
+    }
+    function loadStudents() {
+      showLoading("Site hazırlanıyor...");  // Yükleme ekranını göster
+      // Öğrencileri Yükle
+      google.script.run.withSuccessHandler(function (data) {
+        students = data;
+      }).getStudents();
+
+      // Kitapları Yükle
+      google.script.run.withSuccessHandler(function (data) {
+        kitaplik = getUniqueBooks(data);
+      }).getBooks();
+
+      // Grup ve Tür Verisini Yükle ve Dropdown Doldur
+      google.script.run.withSuccessHandler(function (data) {
+        grupTur = data;
+        const kitapGruplari = [...new Set(grupTur.map(item => item.grup))];
+
+        // Kitap Grubu Dropdown'u Doldur
+        const kitapGrubuSelect = document.getElementById("kitapGrubu");
+        kitapGruplari.forEach(grup => {
+          const option = document.createElement("option");
+          option.value = grup;
+          option.textContent = grup;
+          kitapGrubuSelect.appendChild(option);
+        });
+        hideLoading();  // Yükleme ekranını gizle
+      }).getGrupTur();
+    }
+
+    function fillStudentData(input) {
+      var studentNo = input.value;
+      var found = students.find(function (student) {
+        return student.no == studentNo;
+      });
+      var parent = input.parentElement;
+      if (found) {
+        parent.querySelector('#adSoyad').value = found.adSoyad; // ID yerine class kullanımı
+      } else {
+        parent.querySelector('#adSoyad').value = 'ÖĞRENCİ YOK';
+      }
+    }
+
+
+    function updateKitapTuru() {
+      const selectedGrup = document.getElementById("kitapGrubu").value;
+      const kitapTuruSelect = document.getElementById("kitapTuru");
+
+      // Kitap Türü Dropdown'unu Temizle
+      kitapTuruSelect.innerHTML = "<option value=''>Seçiniz</option>";
+
+      // Seçilen gruba ait türleri filtrele
+      const filteredGrupTur = grupTur.filter(item => item.grup === selectedGrup);
+      
+      // Kitap Türlerini Ekle
+      filteredGrupTur.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item.tur;
+        option.textContent = item.tur;
+        kitapTuruSelect.appendChild(option);
+      });
+    }
+    function showSuggestions(input) {
+      var inputValue = input.value.toLowerCase();
+      var suggestionsContainer = document.getElementById('suggestionsContainer');
+      suggestionsContainer.innerHTML = '';
+      if (inputValue.length === 0) return;
+
+      var suggestionCount = 0; // Öneri sayacını başlat
+
+      kitaplik.forEach(function(kitap) {
+        if (kitap.kitapAdi.toLowerCase().includes(inputValue)) {
+          if (suggestionCount >= 5) return; // En fazla 10 öneri göster
+
+          var suggestion = document.createElement('div');
+          suggestion.className = 'suggestion';
+
+          // Öneriyi daha düzenli göstermek için her kısmı span içinde tutuyoruz
+          var kitapAdi = document.createElement('span');
+          kitapAdi.className = 'kitapAdi';
+          kitapAdi.textContent = kitap.kitapAdi;
+
+          var kitapSayfa = document.createElement('span');
+          kitapSayfa.className = 'kitapSayfa';
+          kitapSayfa.textContent = kitap.kitapSayfa;
+
+          var kitapGrubu = document.createElement('span');
+          kitapGrubu.className = 'kitapGrubu';
+          kitapGrubu.textContent = kitap.kitapGrubu;
+
+          // Tüm öğeleri suggestion içine ekliyoruz
+          suggestion.appendChild(kitapAdi);
+          suggestion.appendChild(kitapSayfa);
+          suggestion.appendChild(kitapGrubu);
+
+          suggestion.onclick = function() {
+            input.value = kitap.kitapAdi;
+            document.getElementById("kitapGrubu").value = kitap.kitapGrubu;
+            updateKitapTuru();
+            document.getElementById("kitapTuru").value = kitap.kitapTuru;
+            document.getElementById("kitapSayfasi").value = kitap.kitapSayfa;
+            suggestionsContainer.innerHTML = '';
+          };
+
+          suggestionsContainer.appendChild(suggestion);
+          suggestionCount++; // Öneri sayacını artır
+        }
+      });
+    }
+
+
+    // Benzersiz kitapları oluşturma fonksiyonu
+    function getUniqueBooks(kitaplar) {
+      const uniqueBooks = [];
+
+      kitaplar.forEach(function(kitap) {
+        if (!uniqueBooks.some(existingBook => existingBook.kitapAdi === kitap.kitapAdi && existingBook.sayfa === kitap.sayfa)) {
+          uniqueBooks.push(kitap);
+        }
+      });
+      return uniqueBooks;
+    }
+    function submitKitapForm() {
+        // Yükleme ekranını göster
+        showLoading("Kitap kaydediliyor...");
+        
+        var studentsData = [];
+        
+        // Form alanlarını al
+        var studentNo = document.getElementById('studentNo').value.trim();
+        var sifre = document.getElementById('sifre').value.trim();
+        var kitapGrubu = document.getElementById('kitapGrubu').value.trim();
+        var kitapTuru = document.getElementById('kitapTuru').value.trim();
+        var kitapAdi = document.getElementById('kitapAdi').value.trim();
+        var kitapSayfasi = document.getElementById('kitapSayfasi').value.trim();
+
+        // Boş alanları kontrol et
+        if (!studentNo || !sifre || !kitapGrubu || !kitapTuru || !kitapAdi || !kitapSayfasi) {
+            hideLoading(); // Yükleme ekranını gizle
+            showCustomAlert("Lütfen tüm alanları doldurun.");
+
+
+            //alert("Lütfen tüm alanları doldurun.");
+            return;
+        }
+
+        // Tüm alanlar doluysa verileri hazırlayın
+        studentsData.push({
+            no: studentNo,
+            sifre: sifre,
+            kitapGrubu: kitapGrubu,
+            kitapTuru: kitapTuru,
+            kitapAdi: kitapAdi,
+            kitapSayfasi: kitapSayfasi
+        });
+
+        // Verileri kaydet
+      google.script.run.withSuccessHandler(function (answer) {
+          refreshForm(); // Formu sıfırla
+          document.getElementById("notesTableContainer").innerHTML = "";
+
+          if (answer.success) {
+              // Eğer işlem başarılıysa
+              google.script.run.withSuccessHandler(function (data) {
+                  kitaplik = [];
+                  kitaplik = getUniqueBooks(data);
+              }).getBooks();
+
+              // Başarı mesajı
+              hideLoading(); // Yükleme ekranını gizle
+              showCustomAlert(answer.message);
+          } else {
+              // Eğer işlem başarısızsa
+              hideLoading(); // Yükleme ekranını gizle
+              showCustomAlert("İşlem başarısız.");
+          }
+
+          
+      }).saveLateData(studentsData);
+    }
+    function getKitapData() {
+        // Öğrenci numarası ve şifreyi al
+        var studentNo = document.getElementById('studentNo').value;
+        var sifre = document.getElementById('sifre').value;
+        var data = { sifre: sifre, no: studentNo };
+
+        if (studentNo) {
+            // Yükleme ekranını göster
+            showLoading("Okunan Kitaplar...");
+
+            // Verileri işle
+            google.script.run
+                .withSuccessHandler((response) => {
+                    displayStudentNotes(response); // Verileri göster
+                    hideLoading(); // Yükleme ekranını gizle
+                })
+                .withFailureHandler(() => {
+                    showCustomAlert("Bir hata oluştu, lütfen tekrar deneyin.");
+                    hideLoading(); // Hata durumunda yükleme ekranını gizle
+                })
+                .getStudentData(data);
+        } else {
+            showCustomAlert("Öğrenci numarası giriniz.");
+        }
+    }
+    function displayStudentNotes(records) {
+      
+      const tableContainer = document.getElementById("notesTableContainer");
+
+      // Önceki tabloyu temizler
+      tableContainer.innerHTML = "";
+
+      // Yeni bir tablo oluşturur
+      const table = document.createElement("table");
+      const headerRow = document.createElement("tr");
+
+      // Başlık satırını oluşturur
+      const dateHeader = document.createElement("th");
+      dateHeader.innerText = "Tarih";
+      headerRow.appendChild(dateHeader);
+
+      const notesHeader = document.createElement("th");
+      notesHeader.innerText = "Kitap Adı-Sayfa";
+      headerRow.appendChild(notesHeader);
+
+      const silTusu = document.createElement("th");
+      silTusu.innerText = "Ayarlar";
+      headerRow.appendChild(silTusu);
+
+      table.appendChild(headerRow);
+
+      // Verileri tabloya ekler
+      records.forEach((record, index) => {
+        const row = document.createElement("tr");
+
+        const dateCell = document.createElement("td");
+        dateCell.innerText = record[0]; // Tarih
+        row.appendChild(dateCell);
+
+        const notesCell = document.createElement("td");
+        notesCell.innerHTML = record[1] + " - " + record[2]; // Notlar
+        row.appendChild(notesCell);
+
+        const actionCell = document.createElement("td");
+        actionCell.class = "actionCell"
+        const deleteButton = document.createElement("button");
+        deleteButton.innerText = "Sil";
+        deleteButton.id = "deleteButton";
+        deleteButton.onclick = function () {
+          deleteRecord(record[1], record[2]);
+        };
+        actionCell.appendChild(deleteButton);
+        row.appendChild(actionCell);
+
+        table.appendChild(row);
+      });
+
+      // Tabloyu sayfaya ekler
+      tableContainer.appendChild(table);
+    }
+
+
+    function deleteRecord(kitapAdi, sayfaSayisi) {
+      if (confirm(`Bu kaydı silmek istediğinizden emin misiniz? Not: "${kitapAdi}"`)) {
+      var studentNo = document.getElementById('studentNo').value;
+      var sifre = document.getElementById('sifre').value;
+      var deleteData={ no: studentNo,sifre: sifre,kitapAdi: kitapAdi, sayfaSayisi: sayfaSayisi };
+      google.script.run.withSuccessHandler(function (response) {
+        if (response) {
+          showCustomAlert("Kayıt başarıyla silindi.");
+          getKitapData(); // Tablonun güncellenmesi için verileri yeniden yükle
+        } else {
+          showCustomAlert("Kayıt silinemedi.");
+        }
+      }).deleteRecordFromSheet(deleteData); // Metni sunucuya gönder
+      }
+    }
+
+
+    function refreshForm() {
+      document.getElementById('kitapGrubu').value = "";
+      document.getElementById('kitapTuru').value = "";
+      document.getElementById('kitapAdi').value = "";
+      document.getElementById('kitapSayfasi').value = "";
+    }
+    loadStudents();
+  </script>
+</body>
+</html>
